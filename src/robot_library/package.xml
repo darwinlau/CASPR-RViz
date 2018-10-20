@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package>
+    <name>robot_library</name>
+    <version>0.0.0</version>
+    <description>Library of robots in CASPR</description>
+    <maintainer email="ypchan@mae.cuhk.edu.hk">Yin Pok Chan</maintainer>
+    <license>BSD</license>
+    <buildtool_depend>catkin</buildtool_depend>
+    <export>
+    </export>
+</package>
