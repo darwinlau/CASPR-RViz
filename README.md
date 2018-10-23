@@ -31,17 +31,16 @@ export ROS_MASTER_URI=http://$ROS_IP:11311
 ```
 where `[caspr-rviz IP]` refers to the IP of your CASPR-RViz platform
 
-## Using CASPR-RViz:
+## Setting up CASPR-RViz:
 ### RViz-side:
 1. Add environment variables
 ```
 source devel/setup.bash
 ```
-2. Launch **CASPR-RViz** with:
+2. Launch RViz with:
 ``` 
 roslaunch caspr_rviz caspr_rviz.launch
 ```
-- RViz should pop up.
 
 3. Enable visualization of meshes and transformations
 - Add `Marker` and `TF` by pressing the `Add` button of the RViz `Display` panel
@@ -57,17 +56,25 @@ CASPRRViz_configuration.SetROSConfig('http://[caspr-rviz IP]:11311','[caspr IP]'
 ```
 where `[caspr-rviz IP]` refers to the IP of your CASPR-RViz platform, and `[caspr IP]` refers to the IP of your CASPR platform
 
-2. Launch CASPR GUI for tests
+## Testing CASPR-RViz:
+1. Launch **CASPR-RViz**
+```
+source devel/setup.bash
+roslaunch caspr_rviz caspr_rviz.launch
+```
+
+2. Launch CASPR GUI on CASPR (MATLAB)
 ``` 
 CASPR_GUI
 ```
 
-3. Select `SpiderBot UR3` in the `Model` drop down menu 
+3. Select `Example 2S` in the `Model` drop down menu of CASPR GUI
 
-4. Make sure the **CASPR-RViz** side is running and Press the `To RViz` button
+4. Press the `To RViz` button on CASPR GUI
 
-5. Verify the visualization on RViz 
+5. Select `world` in the `Global Options > Fixed Frame` drop down menu on the RViz `Display` panel
 
-6. **ENJOY!**
+6. Verify that a 2-link cable-driven robot is successfully visualized in RViz
+
 
 
