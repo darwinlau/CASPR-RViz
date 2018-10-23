@@ -52,7 +52,7 @@ roslaunch caspr_rviz caspr_rviz.launch
 - Note the IP of the platform that you installed CASPR by `ifconfig` (Linux) or `ipconfig` (Windows)
 - Call the following function to set the config of CASPR-RViz interface in CASPR:
 ```
-CASPRRViz_configuration.SetROSConfig('http://[caspr-rviz IP]:11311','[caspr IP]');
+CASPRRViz_configuration.SetROSConfig('[caspr-rviz IP]','[caspr IP]');
 ```
 where `[caspr-rviz IP]` refers to the IP of your CASPR-RViz platform, and `[caspr IP]` refers to the IP of your CASPR platform
 
