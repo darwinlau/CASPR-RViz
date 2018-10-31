@@ -25,13 +25,18 @@ int main(int argc, char **argv){
     while (ros::ok()){
         if (nh->hasParam("deleteall")){
             nh->getParam("deleteall", deleteall);
-            if (deleteall)
+            ROS_INFO_STREAM(deleteall);
+            if (deleteall){
                 visual_ptr->deleteAllMarkers();
+                ROS_INFO_STREAM("Delele all previous markers.");
+            }
+
         }
         // Visualize robot through Visualization
         visual_ptr->publishLink();
         visual_ptr->publishCable();
         visual_ptr->publishEndEffector();
+        visual_ptr->publishForce();
 
         nh->getParam("robot_name", robot_name);
         ROS_INFO_STREAM("CASPR-RViz visualizing: " << robot_name);

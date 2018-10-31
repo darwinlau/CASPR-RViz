@@ -21,6 +21,7 @@ public:
     void publishLink();
     void publishCable();
     void publishEndEffector();
+    void publishForce();
     void deleteAllMarkers();
 
     // Callback functions for subscribing from CASPR-MATLAB
@@ -28,6 +29,7 @@ public:
     void Link_tf(const std_msgs::Float32MultiArray::ConstPtr &msg);
     void Cable(const std_msgs::Float32MultiArray::ConstPtr &msg);
     void EndEffector(const std_msgs::Float32MultiArray::ConstPtr &msg);
+    void Force(const std_msgs::Float32MultiArray::ConstPtr &msg);
 
 protected:
     ros::NodeHandlePtr nh;
@@ -35,11 +37,14 @@ protected:
     // Publisher for rviz markers
     ros::Publisher marker_visualization_pub;
     // Subscriber for CASPR-MATLAB
-    ros::Subscriber link_name_sub, link_tf_sub, cable_sub, endEffector_sub;
+    ros::Subscriber link_name_sub, link_tf_sub, cable_sub, endEffector_sub, force_sub;
 
     // tf broadcaster
     tf::TransformBroadcaster tf_broadcaster;
     int ID;
+
+    void publishForceArrows();
+    void publishForceList();
 
 private:
     mutex mux;
@@ -51,9 +56,11 @@ private:
     vector<tf::Vector3> cable_start;      // Store starting points of cable segments
     vector<tf::Vector3> cable_end;        // Store ending points of cable segments
     vector<tf::Vector3> ee_pos;           // Store end-effector points
+    vector<double> cable_force;           // Store cable forces
     // Parameters
     int max_ee_size = 300;                // Default max ee size
     double cable_scale = 0.005;           // Default scale of cables
     double link_alpha = 1.0;              // Default alpha blending of links
     double link_scale = 0.001;            // Default scale of links
+    double force_scale = 0.01;            // Default scale of force arrows
 };

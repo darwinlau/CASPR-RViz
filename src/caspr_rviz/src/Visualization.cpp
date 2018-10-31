@@ -10,6 +10,7 @@ Visualization::Visualization(){
     link_tf_sub = nh->subscribe("/link_tf", 100, &Visualization::Link_tf, this);
     cable_sub = nh->subscribe("/cable", 100, &Visualization::Cable, this);
     endEffector_sub = nh->subscribe("/ee", 100, &Visualization::EndEffector, this);
+    force_sub = nh->subscribe("/force", 100, &Visualization::Force, this);
 }
 
 // Function for visualizing links got from CASPR-MATLAB
@@ -111,30 +112,249 @@ void Visualization::publishCable() {
         line_list.header.stamp = ros::Time::now();
 
         // Define properties of the line list
-        char tendonnamespace[20];
-        sprintf(tendonnamespace, "cables");
-        line_list.ns = tendonnamespace;
+        line_list.ns = "cables";
         line_list.action = visualization_msgs::Marker::ADD;
         line_list.type = visualization_msgs::Marker::LINE_LIST;
         line_list.scale.x = cable_scale;
         line_list.color.r = 1.0;
-        line_list.color.a = 1.0;
+        line_list.color.a = 0.9;
         line_list.pose.orientation.w = 1.0;
         line_list.lifetime = ros::Duration(0);
         line_list.id = 30000;
         // Load the start and end points into the line list
         for (uint i = 0; i < cable_start.size(); i++) {
-          geometry_msgs::Point p;
-          p.x = cable_start[i].x();
-          p.y = cable_start[i].y();
-          p.z = cable_start[i].z();
-          line_list.points.push_back(p);
-          p.x = cable_end[i].x();
-          p.y = cable_end[i].y();
-          p.z = cable_end[i].z();
-          line_list.points.push_back(p);
+            geometry_msgs::Point p;
+            p.x = cable_start[i].x();
+            p.y = cable_start[i].y();
+            p.z = cable_start[i].z();
+            line_list.points.push_back(p);
+            p.x = cable_end[i].x();
+            p.y = cable_end[i].y();
+            p.z = cable_end[i].z();
+            line_list.points.push_back(p);
         }
         marker_visualization_pub.publish(line_list);
+    }
+}
+
+void Visualization::publishForce(){
+    // Default max no of cables that allow arrow rendering is 50
+    uint max_num_cable_for_arrows = 50;
+    // Count the expected num of arrows to be rendered
+    uint expected_num_arrows = 0;
+    for (auto f:cable_force)
+        if (f >= 0)
+            expected_num_arrows++;
+    // If too much arrows, render line lists instead
+    if (expected_num_arrows > max_num_cable_for_arrows)
+        publishForceList();
+    else
+        publishForceArrows();
+}
+
+// Function for visualizing cable forces as arrows
+// - Only work for robots with small number of cable
+// - Otherwise will cause serious performance issues
+// - Uses info in cable_force, cable_start, cable_end
+void Visualization::publishForceArrows() {
+    // Use param force scale if specified
+    if (nh->hasParam("force_scale")){
+        nh->getParam("force_scale", force_scale);
+    }
+
+    // Check if the cable_force
+    if (cable_force.size() != 0 && cable_start.size() == cable_force.size()){
+        // Create arrow marker
+        visualization_msgs::Marker arrow;
+        arrow.header.frame_id = "world";
+        arrow.header.stamp = ros::Time::now();
+        arrow.ns = "cable_forces";
+        arrow.type = visualization_msgs::Marker::ARROW;
+        arrow.color.a = 1.0;
+        arrow.lifetime = ros::Duration(1);
+        arrow.scale.x = 3*cable_scale;
+        arrow.scale.y = 10*cable_scale;
+        arrow.scale.z = 10*cable_scale;
+        arrow.pose.orientation.w = 1;
+        arrow.pose.orientation.x = 0;
+        arrow.pose.orientation.y = 0;
+        arrow.pose.orientation.z = 0;
+
+        uint id = 40000;
+        for (uint i = 0; i < cable_force.size(); i++){
+            // Check start and end of cable
+            bool isCableStart = true;
+            if (i != 0){
+                // Check if next cable force is negative -> not end of cable
+                if (cable_force[i-1] < 0){
+                    isCableStart = false;
+                }
+            }
+            bool isCableEnd = true;
+            if (i != cable_start.size() - 1){
+                // Check if next cable force is negative -> not end of cable
+                if (cable_force[i+1] < 0){
+                    isCableEnd = false;
+                }
+            }
+            if (cable_force[i] < 0){
+                isCableStart = false;
+                isCableEnd = false;
+            }
+            // Unit direction
+            tf::Vector3 direction = cable_end[i] - cable_start[i];
+            direction.normalize();
+            if (isCableStart){
+                // 1st arrow
+                arrow.id = id + 2*i;
+                arrow.color.r = 1.0f;
+                arrow.color.g = 1.0f;
+                arrow.color.b = 0.0f;
+                arrow.header.stamp = ros::Time::now();
+                arrow.points.clear();
+                geometry_msgs::Point p;
+                // start_1
+                p.x = cable_start[i].x();
+                p.y = cable_start[i].y();
+                p.z = cable_start[i].z();
+                arrow.points.push_back(p);
+                // end_1
+                p.x += direction.x()*force_scale*cable_force[i];
+                p.y += direction.y()*force_scale*cable_force[i];
+                p.z += direction.z()*force_scale*cable_force[i];
+                arrow.points.push_back(p);
+                marker_visualization_pub.publish(arrow);
+            }
+
+            if (isCableEnd){
+                // 2nd arrow
+                arrow.id = id + 2*i + 1;
+                arrow.color.r = 0.0f;
+                arrow.color.g = 1.0f;
+                arrow.color.b = 0.0f;
+                arrow.header.stamp = ros::Time::now();
+                arrow.points.clear();
+                geometry_msgs::Point p;
+                // start_1
+                p.x = cable_end[i].x();
+                p.y = cable_end[i].y();
+                p.z = cable_end[i].z();
+                arrow.points.push_back(p);
+                // end_1
+                p.x -= direction.x()*force_scale*cable_force[i];
+                p.y -= direction.y()*force_scale*cable_force[i];
+                p.z -= direction.z()*force_scale*cable_force[i];
+                arrow.points.push_back(p);
+                marker_visualization_pub.publish(arrow);
+            }
+        }
+    }
+}
+
+// Function for visualizing cable forces as line_list
+// - Uses info in cable_force, cable_start, cable_end
+void Visualization::publishForceList() {
+    // Use param force scale if specified
+    if (nh->hasParam("force_scale")){
+        nh->getParam("force_scale", force_scale);
+    }
+
+    // Check if the two vectors contain any info and their size match
+    if (cable_force.size() != 0 && cable_force.size() == cable_start.size()){
+        // Create line list marker
+        visualization_msgs::Marker line_list_action;
+        line_list_action.header.frame_id = "world";
+        line_list_action.header.stamp = ros::Time::now();
+
+        // Define properties of the line list
+        line_list_action.ns = "cable_force_actions";
+        line_list_action.action = visualization_msgs::Marker::ADD;
+        line_list_action.type = visualization_msgs::Marker::LINE_LIST;
+        line_list_action.scale.x = 2*cable_scale;
+        line_list_action.color.g = 1.0;
+        line_list_action.color.a = 1.0;
+        line_list_action.pose.orientation.w = 0.9;
+        line_list_action.lifetime = ros::Duration(0);
+        line_list_action.id = 40000;
+
+        // Create line list marker
+        visualization_msgs::Marker line_list_reaction;
+        line_list_reaction.header.frame_id = "world";
+        line_list_reaction.header.stamp = ros::Time::now();
+
+        // Define properties of the line list
+        line_list_reaction.ns = "cable_force_reactions";
+        line_list_reaction.action = visualization_msgs::Marker::ADD;
+        line_list_reaction.type = visualization_msgs::Marker::LINE_LIST;
+        line_list_reaction.scale.x = 2*cable_scale;
+        line_list_reaction.color.r = 1.0;
+        line_list_reaction.color.g = 1.0;
+        line_list_reaction.color.a = 1.0;
+        line_list_reaction.pose.orientation.w = 0.9;
+        line_list_reaction.lifetime = ros::Duration(0);
+        line_list_reaction.id = 50001;
+
+        // Load the start and end points into the line list
+        for (uint i = 0; i < cable_start.size(); i++) {
+            // Check start and end of cable
+            bool isCableStart = true;
+            if (i != 0){
+                // Check if next cable force is negative -> not end of cable
+                if (cable_force[i-1] < 0){
+                    isCableStart = false;
+                }
+            }
+            bool isCableEnd = true;
+            if (i != cable_start.size() - 1){
+                // Check if next cable force is negative -> not end of cable
+                if (cable_force[i+1] < 0){
+                    isCableEnd = false;
+                }
+            }
+            if (cable_force[i] < 0){
+                isCableStart = false;
+                isCableEnd = false;
+            }
+            // Unit direction
+            tf::Vector3 direction = cable_end[i] - cable_start[i];
+            direction.normalize();
+            // action
+            geometry_msgs::Point p;
+            // Only draw action arrow if is start of cable
+            if (isCableStart){
+                if (cable_force[i] < 0)
+                    ROS_INFO_STREAM("Printing negative start force");
+                // start_action
+                p.x = cable_start[i].x();
+                p.y = cable_start[i].y();
+                p.z = cable_start[i].z();
+                line_list_action.points.push_back(p);
+                // end_action
+                p.x += direction.x()*force_scale*cable_force[i];
+                p.y += direction.y()*force_scale*cable_force[i];
+                p.z += direction.z()*force_scale*cable_force[i];
+                line_list_action.points.push_back(p);
+            }
+
+            // Only draw reaction arrow if is end of cable
+            if (isCableEnd){
+                if (cable_force[i] < 0)
+                    ROS_INFO_STREAM("Printing negative end force");
+                // reaction
+                // start_reaction
+                p.x = cable_end[i].x();
+                p.y = cable_end[i].y();
+                p.z = cable_end[i].z();
+                line_list_reaction.points.push_back(p);
+                // end_reaction
+                p.x -= direction.x()*force_scale*cable_force[i];
+                p.y -= direction.y()*force_scale*cable_force[i];
+                p.z -= direction.z()*force_scale*cable_force[i];
+                line_list_reaction.points.push_back(p);
+            }
+        }
+        marker_visualization_pub.publish(line_list_action);
+        marker_visualization_pub.publish(line_list_reaction);
     }
 }
 
@@ -188,10 +408,19 @@ void Visualization::publishEndEffector() {
 
 // Function to delete all markers
 void Visualization::deleteAllMarkers(){
+    // Init vector variables
+    cable_start.clear();
+    cable_end.clear();
+    cable_force.clear();
+    link_tf_pos.clear();
+    link_tf_rot.clear();
+    link_names.clear();
+    // Delete all markers
     visualization_msgs::Marker marker;
-    marker.action = visualization_msgs::Marker::DELETE;
-    marker_visualization_pub.publish(marker);
-    nh->setParam("deleteall", 0);
+    marker.action = visualization_msgs::Marker::DELETEALL;
+    for (int i = 0; i < 100; i++)
+        marker_visualization_pub.publish(marker);
+    nh->setParam("deleteall", false);
 }
 
 //////////////////////////////////////
@@ -252,5 +481,15 @@ void Visualization::EndEffector(const std_msgs::Float32MultiArray::ConstPtr &msg
     for (uint i = 0; i < msg->data.size() / 3; i++) {
         tf::Vector3 this_ee_pos = tf::Vector3(msg->data[i*6],msg->data[i*6+1],msg->data[i*6+2]);
         ee_pos.push_back(this_ee_pos);
+    }
+}
+
+// Get an array of cable forces
+// Vector form: [f_1, f_2, ...]
+void Visualization::Force(const std_msgs::Float32MultiArray::ConstPtr &msg){
+    lock_guard<mutex> lock(mux);
+    cable_force.clear();
+    for (auto f:msg->data) {
+        cable_force.push_back(f);
     }
 }
