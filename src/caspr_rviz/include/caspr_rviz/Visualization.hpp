@@ -62,5 +62,6 @@ private:
     double cable_scale = 0.005;           // Default scale of cables
     double link_alpha = 1.0;              // Default alpha blending of links
     double link_scale = 0.001;            // Default scale of links
-    double force_scale = 0.01;            // Default scale of force arrows
+    double force_scale = 0.01;            // Default scale of force magnitude
+    vector<double> force_arrow_scale;     // Storing scale of force arrows
 };

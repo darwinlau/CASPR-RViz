@@ -172,9 +172,21 @@ void Visualization::publishForceArrows() {
         arrow.type = visualization_msgs::Marker::ARROW;
         arrow.color.a = 1.0;
         arrow.lifetime = ros::Duration(1);
-        arrow.scale.x = 3*cable_scale;
-        arrow.scale.y = 10*cable_scale;
-        arrow.scale.z = 10*cable_scale;
+        // Use param force scale if specified
+        if (nh->hasParam("force_arrow_scale")){
+            nh->getParam("force_arrow_scale", force_arrow_scale);
+            if (force_arrow_scale.size() != 3)
+                ROS_INFO_STREAM("Wrong rosparam for force arrow scale!");
+        }
+        else{
+            // Default arrow scale
+            force_arrow_scale.push_back(3);
+            force_arrow_scale.push_back(6);
+            force_arrow_scale.push_back(6);
+        }
+        arrow.scale.x = force_arrow_scale[0]*cable_scale;
+        arrow.scale.y = force_arrow_scale[1]*cable_scale;
+        arrow.scale.z = force_arrow_scale[2]*cable_scale;
         arrow.pose.orientation.w = 1;
         arrow.pose.orientation.x = 0;
         arrow.pose.orientation.y = 0;

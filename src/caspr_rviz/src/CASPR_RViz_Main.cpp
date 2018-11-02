@@ -25,12 +25,10 @@ int main(int argc, char **argv){
     while (ros::ok()){
         if (nh->hasParam("deleteall")){
             nh->getParam("deleteall", deleteall);
-            ROS_INFO_STREAM(deleteall);
             if (deleteall){
                 visual_ptr->deleteAllMarkers();
                 ROS_INFO_STREAM("Delele all previous markers.");
             }
-
         }
         // Visualize robot through Visualization
         visual_ptr->publishLink();
