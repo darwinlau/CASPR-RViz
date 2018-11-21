@@ -24,9 +24,20 @@ void Visualization::publishLink(){
     else
         ROS_ERROR("Robot namespace not defined!");
     // Use param link alpha blending if specified
-    if (nh->hasParam("link_alpha")){
-        nh->getParam("link_alpha", link_alpha);
+    if (nh->hasParam("link_color")){
+        nh->getParam("link_color", link_color);
+        if (link_color.size() != 4)
+            ROS_WARN_STREAM("Wrong size for link color! (Size should be 4 (RGBA) but now is " << link_color.size() << ")");
     }
+    else {
+        // Default cable color is greyish-white
+        link_color.clear();
+        link_color.push_back(0.8);
+        link_color.push_back(0.8);
+        link_color.push_back(0.8);
+        link_color.push_back(1);
+    }
+
     // Use param link alpha blending if specified
     if (nh->hasParam("link_scale")){
         nh->getParam("link_scale", link_scale);
@@ -53,10 +64,10 @@ void Visualization::publishLink(){
             mesh.header.frame_id = "world";
             mesh.ns = name.c_str();
             mesh.type = visualization_msgs::Marker::MESH_RESOURCE;
-            mesh.color.r = 0.8f;
-            mesh.color.g = 0.8f;
-            mesh.color.b = 0.8f;
-            mesh.color.a = link_alpha;
+            mesh.color.r = link_color[0];
+            mesh.color.g = link_color[1];
+            mesh.color.b = link_color[2];
+            mesh.color.a = link_color[3];
             mesh.scale.x = link_scale;
             mesh.scale.y = link_scale;
             mesh.scale.z = link_scale;
@@ -103,6 +114,19 @@ void Visualization::publishCable() {
     if (nh->hasParam("cable_scale")){
         nh->getParam("cable_scale", cable_scale);
     }
+    if (nh->hasParam("cable_color")){
+        nh->getParam("cable_color", cable_color);
+        if (cable_color.size() != 4)
+            ROS_WARN_STREAM("Wrong size for cable color! (Size should be 4 (RGBA) but now is " << cable_color.size() << ")");
+    }
+    else {
+        // Default cable color is red
+        cable_color.clear();
+        cable_color.push_back(1);
+        cable_color.push_back(0);
+        cable_color.push_back(0);
+        cable_color.push_back(1);
+    }
 
     // Check if the two vectors contain any info and their size match
     if (cable_start.size() != 0 && cable_start.size() == cable_end.size()){
@@ -116,8 +140,10 @@ void Visualization::publishCable() {
         line_list.action = visualization_msgs::Marker::ADD;
         line_list.type = visualization_msgs::Marker::LINE_LIST;
         line_list.scale.x = cable_scale;
-        line_list.color.r = 1.0;
-        line_list.color.a = 0.9;
+        line_list.color.r = cable_color[0];
+        line_list.color.g = cable_color[1];
+        line_list.color.b = cable_color[2];
+        line_list.color.a = cable_color[3];
         line_list.pose.orientation.w = 1.0;
         line_list.lifetime = ros::Duration(0);
         line_list.id = 30000;
@@ -176,10 +202,11 @@ void Visualization::publishForceArrows() {
         if (nh->hasParam("force_arrow_scale")){
             nh->getParam("force_arrow_scale", force_arrow_scale);
             if (force_arrow_scale.size() != 3)
-                ROS_INFO_STREAM("Wrong rosparam for force arrow scale!");
+                ROS_WARN_STREAM("Wrong size for force arrow scale! (Size should be 3 but now is " << force_arrow_scale.size() << ")");
         }
         else{
             // Default arrow scale
+            force_arrow_scale.clear();
             force_arrow_scale.push_back(3);
             force_arrow_scale.push_back(6);
             force_arrow_scale.push_back(6);
