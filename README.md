@@ -56,7 +56,7 @@ CASPRRViz_configuration.SetROSConfig('[caspr-rviz IP]','[caspr IP]');
 ```
 where `[caspr-rviz IP]` refers to the IP of your CASPR-RViz platform, and `[caspr IP]` refers to the IP of your CASPR platform
 
-## Testing CASPR-RViz:
+## Using CASPR-RViz:
 1. Launch **CASPR-RViz**
 ```
 source devel/setup.bash
@@ -68,13 +68,54 @@ roslaunch caspr_rviz caspr_rviz.launch
 CASPR_GUI
 ```
 
-3. Select `Example 2S` in the `Model` drop down menu of CASPR GUI
+### Static visualization:
+1. Select your desired model in the `Model` drop down menu of CASPR GUI
 
-4. Press the `To RViz` button on CASPR GUI
+2. Press the `To RViz` button on CASPR GUI
 
-5. Select `world` in the `Global Options > Fixed Frame` drop down menu on the RViz `Display` panel
+3. Select `world` in the `Global Options > Fixed Frame` drop down menu on the RViz `Display` panel
 
-6. Verify that a 2-link cable-driven robot is successfully visualized in RViz
+4. Verify that the robot is successfully visualized in RViz
 
+### Kinematics simulation:
+1. Select your desired model in the `Model` drop down menu of CASPR GUI
 
+2. Press the `Kinematics` button in `Simulators`
 
+3. Press the `Run` button in Kinematics Simulator to run a simulation
+
+4. After the simulation is finished, press the `RViz` button to visualize the robot's motion
+
+### Dynamics simulation:
+1. Select your desired model in the `Model` drop down menu of CASPR GUI
+
+2. Press the `Dynamics` button in `Simulators`
+
+3. Press the `Run` button in Dynamics Simulator to run a simulation
+
+4. After the simulation is finished, press the `RViz` button to visualize the robot's motion and force vectors
+
+## Customizing visualization:
+### Cables:
+1. Change the thickness of the cables by:
+```
+rosparam set /cable_scale scale
+```
+2. Change the color (RGBA) of the cables by: 
+```
+rosparam set /cable_color [R,G,B,A]
+```
+### Links:
+1. Change the color (RGBA) of the links by:
+```
+rosparam set /link_color [R,G,B,A]
+```
+### Cable forces:
+1. Change the magnitude of the forces by:
+```
+rosparam set /force_scale scale
+```
+2. Change the size and shape of the force arrows by:
+```
+rosparam set /force_arrow_scale [x,y,z]
+```
