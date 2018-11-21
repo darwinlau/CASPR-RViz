@@ -1,6 +1,6 @@
 <launch>
     <param name="rviz_rate" type="int" value="60" />
-    <param name="robot_name" type="string" value="Example 2S" />
+    <param name="robot_name" type="string" value="Waiting for CASPR-MATLAB..." />
     <param name="max_ee_size" type="int" value="200" />
     <param name="cable_scale" type="double" value="0.002" />
     <param name="link_scale" type="double" value="0.001" />
