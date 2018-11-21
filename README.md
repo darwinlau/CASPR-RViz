@@ -111,11 +111,11 @@ rosparam set /cable_color [R,G,B,A]
 rosparam set /link_color [R,G,B,A]
 ```
 ### Cable forces:
-1. Change the magnitude of the forces by:
+1. Change the magnitude of the force arrows by:
 ```
 rosparam set /force_scale scale
 ```
-2. Change the size and shape of the force arrows by:
+2. Change the shape of the force arrows by:
 ```
 rosparam set /force_arrow_scale [x,y,z]
 ```
