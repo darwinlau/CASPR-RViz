@@ -404,6 +404,9 @@ void Visualization::publishEndEffector() {
     if (nh->hasParam("max_ee_size")){
         nh->getParam("max_ee_size", max_ee_size);
     }
+    if (nh->hasParam("ee_radius")){
+        nh->getParam("ee_radius", ee_radius);
+    }
 
     // Use default max ee size
     if (ee_pos.size() > max_ee_size){
@@ -427,10 +430,9 @@ void Visualization::publishEndEffector() {
         sphere.color.a = 1.0;
         sphere.lifetime = ros::Duration(0);
         // Radius temporarily defined here, although not too convenient
-        double radius = 0.01;
-        sphere.scale.x = radius;
-        sphere.scale.y = radius;
-        sphere.scale.z = radius;
+        sphere.scale.x = ee_radius;
+        sphere.scale.y = ee_radius;
+        sphere.scale.z = ee_radius;
         sphere.action = visualization_msgs::Marker::ADD;
         sphere.header.stamp = ros::Time::now();
         sphere.id = 1000000;

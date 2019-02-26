@@ -59,6 +59,7 @@ private:
     vector<double> cable_force;           // Store cable forces
     // Parameters
     int max_ee_size = 300;                // Default max ee size
+    double ee_radius = 0.005;
     double cable_scale = 0.005;           // Default scale of cables
     vector<double> cable_color;           // Storing cable colors
     double link_scale = 0.001;            // Default scale of links
