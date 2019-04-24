@@ -21,6 +21,7 @@ public:
     void publishLink();
     void publishCable();
     void publishEndEffector();
+    void publishEndEffectorReference();
     void publishForce();
     void deleteAllMarkers();
 
@@ -29,6 +30,7 @@ public:
     void Link_tf(const std_msgs::Float32MultiArray::ConstPtr &msg);
     void Cable(const std_msgs::Float32MultiArray::ConstPtr &msg);
     void EndEffector(const std_msgs::Float32MultiArray::ConstPtr &msg);
+    void EndEffectorReference(const std_msgs::Float32MultiArray::ConstPtr &msg);
     void Force(const std_msgs::Float32MultiArray::ConstPtr &msg);
 
 protected:
@@ -37,7 +39,7 @@ protected:
     // Publisher for rviz markers
     ros::Publisher marker_visualization_pub;
     // Subscriber for CASPR-MATLAB
-    ros::Subscriber link_name_sub, link_tf_sub, cable_sub, endEffector_sub, force_sub;
+    ros::Subscriber link_name_sub, link_tf_sub, cable_sub, endEffector_sub, endEffectorReference_sub, force_sub;
 
     // tf broadcaster
     tf::TransformBroadcaster tf_broadcaster;
@@ -56,10 +58,16 @@ private:
     vector<tf::Vector3> cable_start;      // Store starting points of cable segments
     vector<tf::Vector3> cable_end;        // Store ending points of cable segments
     vector<tf::Vector3> ee_pos;           // Store end-effector points
+    vector<tf::Vector3> ee_ref_pos;       // Store end-effector reference points
     vector<double> cable_force;           // Store cable forces
     // Parameters
     int max_ee_size = 300;                // Default max ee size
-    double ee_radius = 0.005;
+    double ee_radius = 0.005;             // Default ee radius
+    vector<double> ee_color;              // Storing ee colors
+    int max_ee_ref_size = 1;              // Default max ee ref size
+    double ee_ref_radius = 0.005;         // Default ee ref radius
+    vector<double> ee_ref_color;          // Storing ee ref colors
+
     double cable_scale = 0.005;           // Default scale of cables
     vector<double> cable_color;           // Storing cable colors
     double link_scale = 0.001;            // Default scale of links

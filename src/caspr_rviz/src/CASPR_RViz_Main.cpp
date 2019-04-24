@@ -34,6 +34,7 @@ int main(int argc, char **argv){
         visual_ptr->publishLink();
         visual_ptr->publishCable();
         visual_ptr->publishEndEffector();
+        visual_ptr->publishEndEffectorReference();
         visual_ptr->publishForce();
 
         nh->getParam("robot_name", robot_name);

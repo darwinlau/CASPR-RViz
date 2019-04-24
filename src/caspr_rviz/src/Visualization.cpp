@@ -10,6 +10,7 @@ Visualization::Visualization(){
     link_tf_sub = nh->subscribe("/link_tf", 100, &Visualization::Link_tf, this);
     cable_sub = nh->subscribe("/cable", 100, &Visualization::Cable, this);
     endEffector_sub = nh->subscribe("/ee", 100, &Visualization::EndEffector, this);
+    endEffectorReference_sub = nh->subscribe("/ee_ref", 100, &Visualization::EndEffectorReference, this);
     force_sub = nh->subscribe("/force", 100, &Visualization::Force, this);
 }
 
@@ -407,6 +408,19 @@ void Visualization::publishEndEffector() {
     if (nh->hasParam("ee_radius")){
         nh->getParam("ee_radius", ee_radius);
     }
+    if (nh->hasParam("ee_color")){
+        nh->getParam("ee_color", ee_color);
+        if (ee_color.size() != 4)
+            ROS_WARN_STREAM("Wrong size for ee color! (Size should be 4 (RGBA) but now is " << ee_color.size() << ")");
+    }
+    else {
+        // Default ee color is bluish green
+        ee_color.clear();
+        ee_color.push_back(0);
+        ee_color.push_back(1);
+        ee_color.push_back(1);
+        ee_color.push_back(1);
+    }
 
     // Use default max ee size
     if (ee_pos.size() > max_ee_size){
@@ -416,7 +430,6 @@ void Visualization::publishEndEffector() {
     }
 
     if (ee_pos.size() != 0){
-        ROS_INFO_STREAM("creating ee!");
         // Create a series of spheres
         visualization_msgs::Marker sphere;
         sphere.header.frame_id = "world";
@@ -424,10 +437,10 @@ void Visualization::publishEndEffector() {
         sprintf(eenamespace, "ee");
         sphere.ns = eenamespace;
         sphere.type = visualization_msgs::Marker::SPHERE_LIST;
-        sphere.color.r = 0.0;
-        sphere.color.g = 1.0;
-        sphere.color.b = 1.0;
-        sphere.color.a = 1.0;
+        sphere.color.r = ee_color[0];
+        sphere.color.g = ee_color[1];
+        sphere.color.b = ee_color[2];
+        sphere.color.a = ee_color[3];
         sphere.lifetime = ros::Duration(0);
         // Radius temporarily defined here, although not too convenient
         sphere.scale.x = ee_radius;
@@ -441,6 +454,69 @@ void Visualization::publishEndEffector() {
           p.x = ee_pos[i].x();
           p.y = ee_pos[i].y();
           p.z = ee_pos[i].z();
+          sphere.points.push_back(p);
+        }
+        marker_visualization_pub.publish(sphere);
+    }
+}
+
+// Function for visualizing end-effector reference got from CASPR-MATLAB
+// - Uses info in ee_ref_pos
+void Visualization::publishEndEffectorReference() {
+    // Use param max ee ref size if specified
+    if (nh->hasParam("max_ee_ref_size")){
+        nh->getParam("max_ee_ref_size", max_ee_ref_size);
+    }
+    if (nh->hasParam("ee_ref_radius")){
+        nh->getParam("ee_ref_radius", ee_ref_radius);
+    }
+    if (nh->hasParam("ee_ref_color")){
+        nh->getParam("ee_ref_color", ee_ref_color);
+        ROS_INFO_STREAM("EE Ref color size: " << ee_ref_color.size());
+        if (ee_ref_color.size() != 4)
+            ROS_WARN_STREAM("Wrong size for ee ref color! (Size should be 4 (RGBA) but now is " << ee_ref_color.size() << ")");
+    }
+    else {
+        // Default ee ref color is transparent grey
+        ee_ref_color.clear();
+        ee_ref_color.push_back(0.7);
+        ee_ref_color.push_back(0.7);
+        ee_ref_color.push_back(0.7);
+        ee_ref_color.push_back(0.7);
+    }
+
+    // Use default max ee ref size
+    if (ee_ref_pos.size() > max_ee_ref_size){
+        for (uint i = 0; i < ee_ref_pos.size() - max_ee_ref_size; i++){
+            ee_ref_pos.erase(ee_ref_pos.begin());
+        }
+    }
+
+    if (ee_ref_pos.size() != 0){
+        // Create a series of spheres
+        visualization_msgs::Marker sphere;
+        sphere.header.frame_id = "world";
+        char eerefnamespace[20];
+        sprintf(eerefnamespace, "ee_ref");
+        sphere.ns = eerefnamespace;
+        sphere.type = visualization_msgs::Marker::SPHERE_LIST;
+        sphere.color.r = ee_ref_color[0];
+        sphere.color.g = ee_ref_color[1];
+        sphere.color.b = ee_ref_color[2];
+        sphere.color.a = ee_ref_color[3];
+        sphere.lifetime = ros::Duration(0);
+        // Radius temporarily defined here, although not too convenient
+        sphere.scale.x = ee_ref_radius;
+        sphere.scale.y = ee_ref_radius;
+        sphere.scale.z = ee_ref_radius;
+        sphere.action = visualization_msgs::Marker::ADD;
+        sphere.header.stamp = ros::Time::now();
+        sphere.id = 1500000;
+        for(uint i = 0; i < ee_ref_pos.size(); i++){
+          geometry_msgs::Point p;
+          p.x = ee_ref_pos[i].x();
+          p.y = ee_ref_pos[i].y();
+          p.z = ee_ref_pos[i].z();
           sphere.points.push_back(p);
         }
         marker_visualization_pub.publish(sphere);
@@ -520,9 +596,21 @@ void Visualization::EndEffector(const std_msgs::Float32MultiArray::ConstPtr &msg
     lock_guard<mutex> lock(mux);
     // ee_pos.clear();
     for (uint i = 0; i < msg->data.size() / 3; i++) {
-        tf::Vector3 this_ee_pos = tf::Vector3(msg->data[i*6],msg->data[i*6+1],msg->data[i*6+2]);
+        tf::Vector3 this_ee_pos = tf::Vector3(msg->data[i*3],msg->data[i*3+1],msg->data[i*3+2]);
         ee_pos.push_back(this_ee_pos);
     }
+}
+
+// Get an array of end-effector reference points
+// Vector form: [ee_ref_1, ee_ref_2, ...]
+void Visualization::EndEffectorReference(const std_msgs::Float32MultiArray::ConstPtr &msg){
+    lock_guard<mutex> lock(mux);
+    // ee_pos.clear();
+    for (uint i = 0; i < msg->data.size() / 3; i++) {
+        tf::Vector3 this_ee_ref_pos = tf::Vector3(msg->data[i*3],msg->data[i*3+1],msg->data[i*3+2]);
+        ee_ref_pos.push_back(this_ee_ref_pos);
+    }
+    ROS_INFO_STREAM("Receiving ee ref!");
 }
 
 // Get an array of cable forces
